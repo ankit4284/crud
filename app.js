@@ -5,6 +5,7 @@ const express = require('express')
 const mongoose = require('mongoose')
 const User = require('./models/user')
 const bodyParser = require('body-parser')
+const bcrypt = require('bcrypt');
 const dbUrl = process.env.DB_URL
 mongoose.connect(
   dbUrl,
@@ -28,13 +29,15 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
 app.post('/register', async (req, res, next) => {
-  console.log(req.body)
+  // console.log(req.body)
   try {
-    const {
+    let {
       name,
       username,
       pass
     } = req.body
+    const hash = await bcrypt.hash(pass, 12);
+    pass=hash;
     const p = new User({
       name,
       username,
@@ -57,7 +60,7 @@ app.get("/readUser",async (req, res) =>{
 app.put("/updateUser", async (req, res) => {
   const fuser  = req.body.username;
   const newName = req.body.newName;
-  let newUser = await User.findOneAndUpdate({username: req.body.username, pass:req.body.pass}, { name:newName },{new:true});
+  let newUser = await User.findOneAndUpdate({username: req.body.username}, { name:newName },{new:true});
   // console.log(newUser);
   if(newUser!=null)
   res.send(`Done with updating, the new record is:\n${newUser}`);
@@ -65,7 +68,7 @@ app.put("/updateUser", async (req, res) => {
   res.send("Error");
 });
 app.delete("/deleteUser",async (req, res) =>{
-  const fuser= await User.findOneAndDelete({ username: req.body.username , pass: req.body.pass });
+  const fuser= await User.findOneAndDelete({ username: req.body.username });
   if(fuser!=null)
   res.send( `Done with Deleting the following record\n${fuser}`);  
   else
